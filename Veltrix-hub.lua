@@ -234,7 +234,7 @@ addButton(tabProj, "Veltrix Hub - Created by b8zm", false, function() end)
 addSectionTitle(tabProj, "COMMUNITY")
 local dcBtn = Instance.new("TextButton")
 dcBtn.Size = UDim2.new(1, 0, 0, 36)
-dcBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242) -- لون ديسكورد الأزرق
+dcBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
 dcBtn.Text = "💬  سيرفرنا ديسكورد"
 dcBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 dcBtn.Font = Enum.Font.GothamBold
@@ -249,7 +249,7 @@ dcBtn.MouseButton1Click:Connect(function()
 		task.wait(1.5)
 		dcBtn.Text = "💬  سيرفرنا ديسكورد"
 	else
-		dcBtn.Text = "المنفذ لا يدعم النسخ التلقائي"
+		dcBtn.Text = "المنفذ لا يدعم النسخ"
 		task.wait(1.5)
 		dcBtn.Text = "💬  سيرفرنا ديسكورد"
 	end
@@ -574,4 +574,3 @@ addToggle(tabCoin, "تفعيل جمع الكوينات", function(v)
 	end)
 end)
 
-print("Veltrix Hub Loaded Successfully!")

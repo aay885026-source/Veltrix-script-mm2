@@ -1,4 +1,4 @@
--- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition (Fling Murderer Feature)
+-- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition (Fling & Pre-Round ESP Final)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -237,7 +237,7 @@ addButton(tabGame, "Pick Up Gun / Drop", false, function()
 end)
 
 -- زر الـ Fling المدمر للقاتل
-addButton(tabGame, "🌪️ Fling Murderer (تطير القاتل خارج الماب نهائياً)", true, function()
+addButton(tabGame, "🌪️ Fling Murderer (تطير القاتل للفراغ نهائياً)", true, function()
 	task.spawn(function()
 		pcall(function()
 			local char = LocalPlayer.Character
@@ -245,7 +245,6 @@ addButton(tabGame, "🌪️ Fling Murderer (تطير القاتل خارج ال�
 			local hum = char and char:FindFirstChild("Humanoid")
 			if not hrp or not hum then return end
 			
-			-- البحث عن القاتل
 			local targetPlayer = nil
 			for _, p in ipairs(Players:GetPlayers()) do
 				if p ~= LocalPlayer and p.Character then
@@ -259,7 +258,6 @@ addButton(tabGame, "🌪️ Fling Murderer (تطير القاتل خارج ال�
 			if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
 				local tHRP = targetPlayer.Character.HumanoidRootPart
 				
-				-- إلغاء التصادم وتثبيت الشخصية مؤقتاً لتوليد طاقة الـ Fling
 				for _, part in ipairs(char:GetDescendants()) do
 					if part:IsA("BasePart") then
 						part.CanCollide = false
@@ -268,24 +266,22 @@ addButton(tabGame, "🌪️ Fling Murderer (تطير القاتل خارج ال�
 				
 				local bav = Instance.new("BodyAngularVelocity", hrp)
 				bav.MaxTorque = Vector3.new(0, math.huge, 0)
-				bav.AngularVelocity = Vector3.new(0, 99999, 0) -- سرعة دوران جنونية تولد الانفجار الحركي
+				bav.AngularVelocity = Vector3.new(0, 99999, 0)
 				
 				local bv = Instance.new("BodyVelocity", hrp)
 				bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
 				
-				-- لصق شخصيتك بالقاتل تماماً لفترة قصيرة لتنتقل الطاقة له ويطير
 				local startTime = tick()
 				while tick() - startTime < 1.5 do
 					if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then break end
 					hrp.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame
-					bv.Velocity = Vector3.new(math.random(-5000, 5000), 99999, math.random(-5000, 5000)) -- طيران عمودي وأفقي مرعب
+					bv.Velocity = Vector3.new(math.random(-5000, 5000), 99999, math.random(-5000, 5000))
 					RunService.RenderStepped:Wait()
 				end
 				
 				bav:Destroy()
 				bv:Destroy()
 				
-				-- إرجاع التصادم طبيعي
 				for _, part in ipairs(char:GetDescendants()) do
 					if part:IsA("BasePart") then
 						part.CanCollide = true
@@ -549,9 +545,9 @@ addToggle(tabEsp, "Players ESP (كشف الأدوار المسبق للقاتل 
 						end
 					end)
 
-					local col = Color3.fromRGB(0, 255, 100) -- بريء
-					if isMurder then col = Color3.fromRGB(255, 40, 40) end   -- قاتل (أحمر)
-					if isSheriff then col = Color3.fromRGB(40, 120, 255) end -- شريف (أزرق)
+					local col = Color3.fromRGB(0, 255, 100)
+					if isMurder then col = Color3.fromRGB(255, 40, 40) end
+					if isSheriff then col = Color3.fromRGB(40, 120, 255) end
 
 					local hl = p.Character:FindFirstChild("VeltrixESP")
 					if not hl then

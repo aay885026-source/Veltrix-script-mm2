@@ -1,4 +1,4 @@
--- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition (Final Instant Kill Murder Fix)
+-- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition (Official Kill Method)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -236,54 +236,41 @@ addButton(tabGame, "Pick Up Gun / Drop", false, function()
 	end
 end)
 
-addButton(tabGame, "Kill Murder Instantly (سحب نهائي للفراغ وموت مؤكد)", true, function()
+addButton(tabGame, "Kill Murder Instantly (القتل الفعلي عبر رصاصة النظام)", true, function()
 	task.spawn(function()
-		for _, p in ipairs(Players:GetPlayers()) do
-			if p ~= LocalPlayer and p.Character then
-				if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then
-					local char = p.Character
-					local hrp = char:FindFirstChild("HumanoidRootPart")
-					local hum = char:FindFirstChild("Humanoid")
-					local knife = char:FindFirstChild("Knife") or p.Backpack:FindFirstChild("Knife")
-					
-					if hrp and hum then
-						pcall(function()
-							-- تجريده من السكين لمنع أي حماية
-							if knife then
-								knife.Parent = workspace
-							end
-							
-							-- إيقاف التصادم وتثبيت الصحة للصفر
-							for _, part in ipairs(char:GetDescendants()) do
-								if part:IsA("BasePart") then
-									part.CanCollide = false
-									part.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-									part.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+		pcall(function()
+			local char = LocalPlayer.Character
+			local gun = char and char:FindFirstChild("Gun") or LocalPlayer.Backpack:FindFirstChild("Gun")
+			
+			for _, p in ipairs(Players:GetPlayers()) do
+				if p ~= LocalPlayer and p.Character then
+					local isMurder = p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife")
+					if isMurder then
+						local tHRP = p.Character:FindFirstChild("HumanoidRootPart")
+						if tHRP then
+							if gun then
+								gun.Parent = char
+								for i = 1, 5 do
+									gun.Shoot:FireServer(tHRP.Position, tHRP.Position)
+									task.wait(0.05)
 								end
-							end
-							
-							hum.PlatformStand = true
-							hum.MaxHealth = 0
-							hum.Health = 0
-							
-							-- سحب سريع وتثبيت في عمق الفراغ السحيق
-							task.spawn(function()
-								for i = 1, 100 do
-									if char and char.Parent and hrp and hum then
-										hrp.CFrame = CFrame.new(math.random(-1000, 1000), -500000, math.random(-1000, 1000))
-										hrp.AssemblyLinearVelocity = Vector3.new(0, -5000, 0)
-										hum.Health = 0
-									else
-										break
+							else
+								if char and char:FindFirstChild("HumanoidRootPart") then
+									char.HumanoidRootPart.CFrame = tHRP.CFrame * CFrame.new(0, 0, 3)
+									task.wait(0.05)
+									for _, tool in ipairs(LocalPlayer.Backpack:GetChildren()) do
+										if tool:IsA("Tool") then
+											tool.Parent = char
+											tool:Activate()
+										end
 									end
-									task.wait(0.03)
 								end
-							end)
-						end)
+							end
+						end
 					end
 				end
 			end
-		end
+		end)
 	end)
 end)
 

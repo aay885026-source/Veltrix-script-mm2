@@ -1,4 +1,4 @@
--- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition (All Features Integrated)
+-- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition (All Features & Smart Fling Integrated)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -239,7 +239,7 @@ addButton(tabGame, "Pick Up Gun / Drop", false, function()
 	end
 end)
 
-addButton(tabGame, "🌪️ Fling Murderer (تطير القاتل الحقيقي بدون ما تموت)", true, function()
+addButton(tabGame, "🌪️ Fling Murderer (النسخة الذكية المطورة)", true, function()
 	task.spawn(function()
 		pcall(function()
 			local char = LocalPlayer.Character
@@ -261,42 +261,54 @@ addButton(tabGame, "🌪️ Fling Murderer (تطير القاتل الحقيقي
 				end
 			end
 			
-			if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
-				local tHRP = targetPlayer.Character.HumanoidRootPart
-				cam.CameraSubject = targetPlayer.Character:FindFirstChildOfClass("Humanoid") or tHRP
-				
-				hum.PlatformStand = true
-				for _, part in ipairs(char:GetDescendants()) do
-					if part:IsA("BasePart") then part.CanCollide = false end
-				end
-				
-				local bav = Instance.new("BodyAngularVelocity", hrp)
-				bav.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-				bav.AngularVelocity = Vector3.new(99999, 99999, 99999)
-				
-				local bv = Instance.new("BodyVelocity", hrp)
-				bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-				bv.Velocity = Vector3.new(0, 50, 0)
-				
-				local startTime = tick()
-				while tick() - startTime < 1.3 do
-					if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then break end
-					hrp.CFrame = tHRP.CFrame * CFrame.new(0, -1, 0) * CFrame.Angles(math.random(-50,50), math.random(-50,50), math.random(-50,50))
-					RunService.RenderStepped:Wait()
-				end
-				
-				bav:Destroy()
-				bv:Destroy()
-				hum.PlatformStand = false
-				cam.CameraSubject = oldSubject
-				
-				for _, part in ipairs(char:GetDescendants()) do
-					if part:IsA("BasePart") then part.CanCollide = true end
-				end
-				
-				task.wait(0.05)
-				hrp.CFrame = originalCFrame
+			if not targetPlayer or not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+				return
 			end
+			
+			local tHRP = targetPlayer.Character.HumanoidRootPart
+			cam.CameraSubject = targetPlayer.Character:FindFirstChildOfClass("Humanoid") or tHRP
+			
+			hum.PlatformStand = true
+			for _, part in ipairs(char:GetDescendants()) do
+				if part:IsA("BasePart") then part.CanCollide = false end
+			end
+			
+			local bav = Instance.new("BodyAngularVelocity", hrp)
+			bav.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+			bav.AngularVelocity = Vector3.new(0, 99999, 0)
+			
+			local bv = Instance.new("BodyVelocity", hrp)
+			bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+			bv.Velocity = Vector3.new(0, 100, 0)
+			
+			local startTime = tick()
+			while tick() - startTime < 4.5 do
+				if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then break end
+				
+				local angle = tick() * 25
+				local offsetX = math.cos(angle) * 3
+				local offsetZ = math.sin(angle) * 3
+				
+				hrp.CFrame = tHRP.CFrame * CFrame.new(offsetX, -0.5, offsetZ)
+				
+				if (tHRP.Position - originalCFrame.Position).Magnitude > 40 then
+					break
+				end
+				
+				RunService.RenderStepped:Wait()
+			end
+			
+			bav:Destroy()
+			bv:Destroy()
+			hum.PlatformStand = false
+			cam.CameraSubject = oldSubject
+			
+			for _, part in ipairs(char:GetDescendants()) do
+				if part:IsA("BasePart") then part.CanCollide = true end
+			end
+			
+			task.wait(0.05)
+			hrp.CFrame = originalCFrame
 		end)
 	end)
 end)
@@ -661,4 +673,3 @@ addToggle(tabCoin, "تفعيل جمع الكوينات المستمر", function
 	end)
 end)
 
-print("Veltrix Hub Loaded Successfully!")

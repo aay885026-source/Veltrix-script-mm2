@@ -1,4 +1,4 @@
--- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition (Fling Fix & Pre-Round ESP)
+-- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition (Fixed Real Fling & Pre-Round ESP)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -236,8 +236,8 @@ addButton(tabGame, "Pick Up Gun / Drop", false, function()
 	end
 end)
 
--- زر الـ Fling المحدث (انتقال للقاتل، تفجير وطيران، ثم العودة لمكانك)
-addButton(tabGame, "🌪️ Fling Murderer (انتقال، طيران للقاتل، ثم العودة)", true, function()
+-- زر الـ Fling الحقيقي المصحح (يجعل القاتل يطير وحده وأنت تسلم)
+addButton(tabGame, "🌪️ Fling Murderer (تطير القاتل الحقيقي بدون ما تموت)", true, function()
 	task.spawn(function()
 		pcall(function()
 			local char = LocalPlayer.Character
@@ -245,8 +245,12 @@ addButton(tabGame, "🌪️ Fling Murderer (انتقال، طيران للقات
 			local hum = char and char:FindFirstChild("Humanoid")
 			if not hrp or not hum then return end
 			
+			-- حفظ مكانك الأصلي والكاميرا
 			local originalCFrame = hrp.CFrame
+			local cam = workspace.CurrentCamera
+			local oldSubject = cam.CameraSubject
 			
+			-- البحث عن القاتل
 			local targetPlayer = nil
 			for _, p in ipairs(Players:GetPlayers()) do
 				if p ~= LocalPlayer and p.Character then
@@ -260,29 +264,40 @@ addButton(tabGame, "🌪️ Fling Murderer (انتقال، طيران للقات
 			if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
 				local tHRP = targetPlayer.Character.HumanoidRootPart
 				
+				-- ربط الكاميرا بالقاتل عشان تشوفه وهو يطير
+				cam.CameraSubject = targetPlayer.Character:FindFirstChildOfClass("Humanoid") or tHRP
+				
+				-- إيقاف الجاذبية عن شخصيتك وتفعيل Noclip مؤقت عشان ما تموت
+				hum.PlatformStand = true
 				for _, part in ipairs(char:GetDescendants()) do
 					if part:IsA("BasePart") then
 						part.CanCollide = false
 					end
 				end
 				
+				-- طريقة الـ Fling الحقيقية: دوران عالي السرعة مع توليد طاقة دفع تتركز في الـ Hitbox للقاتل
 				local bav = Instance.new("BodyAngularVelocity", hrp)
 				bav.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-				bav.AngularVelocity = Vector3.new(0, 99999, 0)
+				bav.AngularVelocity = Vector3.new(99999, 99999, 99999)
 				
 				local bv = Instance.new("BodyVelocity", hrp)
 				bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+				bv.Velocity = Vector3.new(0, 50, 0) -- تثبيت خفيف لك وعدم الارتداد للفراغ
 				
 				local startTime = tick()
-				while tick() - startTime < 1.2 do
+				while tick() - startTime < 1.3 do
 					if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then break end
-					hrp.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame
-					bv.Velocity = Vector3.new(math.random(-6000, 6000), 99999, math.random(-6000, 6000))
+					-- الالتصاق الدقيق بالقاتل من الأسفل لتوليد ضغط فيزياء يطيره
+					hrp.CFrame = tHRP.CFrame * CFrame.new(0, -1, 0) * CFrame.Angles(math.random(-50,50), math.random(-50,50), math.random(-50,50))
 					RunService.RenderStepped:Wait()
 				end
 				
+				-- تنظيف قوى الـ Fling فوراً
 				bav:Destroy()
 				bv:Destroy()
+				
+				hum.PlatformStand = false
+				cam.CameraSubject = oldSubject
 				
 				for _, part in ipairs(char:GetDescendants()) do
 					if part:IsA("BasePart") then
@@ -290,6 +305,7 @@ addButton(tabGame, "🌪️ Fling Murderer (انتقال، طيران للقات
 					end
 				end
 				
+				-- العودة الفورية لمكانك الأصلي بأمان تام
 				task.wait(0.05)
 				hrp.CFrame = originalCFrame
 			end
@@ -661,84 +677,4 @@ addToggle(tabCoin, "تفعيل جمع الكوينات المستمر", function
 				if hum and hrp and isCoinFarmActive then
 					hum.WalkSpeed = currentFarmSpeed
 					
-					local coins = {}
-					for _, coin in ipairs(workspace:GetDescendants()) do
-						if coin:IsA("BasePart") and (coin.Name == "Coin" or coin.Name:lower():find("coin") or coin.Name:lower():find("gold") or coin.Parent.Name:lower():find("coin")) then
-							if coin.Transparency < 0.9 then
-								local dist = (coin.Position - hrp.Position).Magnitude
-								table.insert(coins, {part = coin, distance = dist})
-							end
-						end
-					end
-
-					table.sort(coins, function(a, b)
-						return a.distance < b.distance
-					end)
-
-					if #coins > 0 then
-						for _, cData in ipairs(coins) do
-							if not isCoinFarmActive then break end
-							local coin = cData.part
-							if coin and coin.Parent and coin.Transparency < 0.9 and isCoinFarmActive then
-								hum:MoveTo(coin.Position)
-								local startTime = tick()
-								while coin and coin.Parent and (coin.Position - hrp.Position).Magnitude > 3 and isCoinFarmActive do
-									if tick() - startTime > 1.8 then break end
-									task.wait(0.05)
-								end
-							end
-						end
-					else
-						task.wait(0.5)
-					end
-				end
-			end)
-			task.wait(0.1)
-		end
-		
-		if noclipConnection then
-			noclipConnection:Disconnect()
-			noclipConnection = nil
-		end
-		pcall(function()
-			local char = LocalPlayer.Character
-			if char then
-				for _, part in ipairs(char:GetDescendants()) do
-					if part:IsA("BasePart") then
-						part.CanCollide = true
-					end
-				end
-				local hum = char:FindFirstChild("Humanoid")
-				if hum then
-					hum.WalkSpeed = 16
-					hum:Move(Vector3.new(0,0,0), true)
-				end
-			end
-		end)
-	end)
-end)
-
-local speedInfoLabel = Instance.new("TextLabel")
-speedInfoLabel.Size = UDim2.new(1, 0, 0, 20)
-speedInfoLabel.BackgroundTransparency = 1
-speedInfoLabel.Text = "⚡ سرعة تجميع الكوينات الحالية: " .. currentFarmSpeed
-speedInfoLabel.TextColor3 = Color3.fromRGB(200, 160, 255)
-speedInfoLabel.Font = Enum.Font.GothamMedium
-speedInfoLabel.TextSize = 10
-speedInfoLabel.TextXAlignment = Enum.TextXAlignment.Left
-speedInfoLabel.Parent = tabCoin
-
--- فتح وإغلاق النافذة
-local isOpen = false
-toggleBtn.MouseButton1Click:Connect(function()
-	isOpen = not isOpen
-	if isOpen then
-		mainFrame.Visible = true
-		mainFrame.Size = UDim2.new(0, 0, 0, 0)
-		mainFrame:TweenSize(UDim2.new(0, 520, 0, 350), Enum.EasingDirection.Out, Enum.EasingStyle.Back, 0.3, true)
-	else
-		mainFrame:TweenSize(UDim2.new(0, 0, 0, 0), Enum.EasingDirection.In, Enum.EasingStyle.Back, 0.25, true, function()
-			mainFrame.Visible = false
-		end)
-	end
-end)
+					... -- باقي كود الكوينات

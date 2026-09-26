@@ -42,6 +42,11 @@ local mStroke = Instance.new("UIStroke", mainFrame)
 mStroke.Color = Color3.fromRGB(120, 50, 210)
 mStroke.Thickness = 1.5
 
+-- إظهار وإخفاء القائمة عبر الزر العائم
+toggleBtn.MouseButton1Click:Connect(function()
+	mainFrame.Visible = not mainFrame.Visible
+end)
+
 -- الشريط العلوي
 local topBar = Instance.new("Frame")
 topBar.Size = UDim2.new(1, 0, 0, 38)
@@ -49,7 +54,7 @@ topBar.BackgroundColor3 = Color3.fromRGB(28, 22, 42)
 topBar.BorderSizePixel = 0
 topBar.Parent = mainFrame
 
--- عنوان الـ Hub مع التوقيع المطلوب
+-- عنوان الـ Hub مع التوقيع المطلوبة
 local hubTitleLbl = Instance.new("TextLabel")
 hubTitleLbl.Size = UDim2.new(0, 300, 1, 0)
 hubTitleLbl.Position = UDim2.new(0, 12, 0, 0)
@@ -236,7 +241,7 @@ addButton(tabGame, "Pick Up Gun / Drop", false, function()
 	end
 end)
 
--- زر الـ Fling الحقيقي المصحح (يجعل القاتل يطير وحده وأنت تسلم)
+-- زر الـ Fling الحقيقي المصحح
 addButton(tabGame, "🌪️ Fling Murderer (تطير القاتل الحقيقي بدون ما تموت)", true, function()
 	task.spawn(function()
 		pcall(function()
@@ -245,12 +250,10 @@ addButton(tabGame, "🌪️ Fling Murderer (تطير القاتل الحقيقي
 			local hum = char and char:FindFirstChild("Humanoid")
 			if not hrp or not hum then return end
 			
-			-- حفظ مكانك الأصلي والكاميرا
 			local originalCFrame = hrp.CFrame
 			local cam = workspace.CurrentCamera
 			local oldSubject = cam.CameraSubject
 			
-			-- البحث عن القاتل
 			local targetPlayer = nil
 			for _, p in ipairs(Players:GetPlayers()) do
 				if p ~= LocalPlayer and p.Character then
@@ -263,11 +266,8 @@ addButton(tabGame, "🌪️ Fling Murderer (تطير القاتل الحقيقي
 			
 			if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
 				local tHRP = targetPlayer.Character.HumanoidRootPart
-				
-				-- ربط الكاميرا بالقاتل عشان تشوفه وهو يطير
 				cam.CameraSubject = targetPlayer.Character:FindFirstChildOfClass("Humanoid") or tHRP
 				
-				-- إيقاف الجاذبية عن شخصيتك وتفعيل Noclip مؤقت عشان ما تموت
 				hum.PlatformStand = true
 				for _, part in ipairs(char:GetDescendants()) do
 					if part:IsA("BasePart") then
@@ -275,24 +275,21 @@ addButton(tabGame, "🌪️ Fling Murderer (تطير القاتل الحقيقي
 					end
 				end
 				
-				-- طريقة الـ Fling الحقيقية: دوران عالي السرعة مع توليد طاقة دفع تتركز في الـ Hitbox للقاتل
 				local bav = Instance.new("BodyAngularVelocity", hrp)
 				bav.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
 				bav.AngularVelocity = Vector3.new(99999, 99999, 99999)
 				
 				local bv = Instance.new("BodyVelocity", hrp)
 				bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-				bv.Velocity = Vector3.new(0, 50, 0) -- تثبيت خفيف لك وعدم الارتداد للفراغ
+				bv.Velocity = Vector3.new(0, 50, 0)
 				
 				local startTime = tick()
 				while tick() - startTime < 1.3 do
 					if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then break end
-					-- الالتصاق الدقيق بالقاتل من الأسفل لتوليد ضغط فيزياء يطيره
 					hrp.CFrame = tHRP.CFrame * CFrame.new(0, -1, 0) * CFrame.Angles(math.random(-50,50), math.random(-50,50), math.random(-50,50))
 					RunService.RenderStepped:Wait()
 				end
 				
-				-- تنظيف قوى الـ Fling فوراً
 				bav:Destroy()
 				bv:Destroy()
 				
@@ -305,7 +302,6 @@ addButton(tabGame, "🌪️ Fling Murderer (تطير القاتل الحقيقي
 					end
 				end
 				
-				-- العودة الفورية لمكانك الأصلي بأمان تام
 				task.wait(0.05)
 				hrp.CFrame = originalCFrame
 			end
@@ -669,7 +665,7 @@ addToggle(tabCoin, "تفعيل جمع الكوينات المستمر", function
 
 	task.spawn(function()
 		while isCoinFarmActive do
-			local success, err = pcall(function()
+			pcall(function()
 				local char = LocalPlayer.Character
 				local hum = char and char:FindFirstChild("Humanoid")
 				local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -677,4 +673,27 @@ addToggle(tabCoin, "تفعيل جمع الكوينات المستمر", function
 				if hum and hrp and isCoinFarmActive then
 					hum.WalkSpeed = currentFarmSpeed
 					
-					... -- باقي كود الكوينات
+					-- البحث عن أقرب كوين وتوجيه الشخصية نحوه تلقائياً
+					local closestCoin = nil
+					local shortestDist = math.huge
+					
+					for _, obj in ipairs(workspace:GetDescendants()) do
+						if obj:IsA("BasePart") and (obj.Name == "Coin" or obj.Name:lower():find("coin") or obj.Parent.Name:lower():find("coin")) then
+							local dist = (hrp.Position - obj.Position).Magnitude
+							if dist < shortestDist then
+								shortestDist = dist
+								closestCoin = obj
+							end
+						end
+					end
+					
+					if closestCoin then
+						hrp.CFrame = CFrame.new(closestCoin.Position + Vector3.new(0, 2, 0))
+					end
+				end
+			end)
+			task.wait(0.3)
+		end
+	end)
+end)
+

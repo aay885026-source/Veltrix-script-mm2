@@ -1,4 +1,4 @@
--- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition (Fling & Pre-Round ESP Final)
+-- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition (Fling Fix & Pre-Round ESP)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -236,14 +236,16 @@ addButton(tabGame, "Pick Up Gun / Drop", false, function()
 	end
 end)
 
--- زر الـ Fling المدمر للقاتل
-addButton(tabGame, "🌪️ Fling Murderer (تطير القاتل للفراغ نهائياً)", true, function()
+-- زر الـ Fling المحدث (انتقال للقاتل، تفجير وطيران، ثم العودة لمكانك)
+addButton(tabGame, "🌪️ Fling Murderer (انتقال، طيران للقاتل، ثم العودة)", true, function()
 	task.spawn(function()
 		pcall(function()
 			local char = LocalPlayer.Character
 			local hrp = char and char:FindFirstChild("HumanoidRootPart")
 			local hum = char and char:FindFirstChild("Humanoid")
 			if not hrp or not hum then return end
+			
+			local originalCFrame = hrp.CFrame
 			
 			local targetPlayer = nil
 			for _, p in ipairs(Players:GetPlayers()) do
@@ -265,17 +267,17 @@ addButton(tabGame, "🌪️ Fling Murderer (تطير القاتل للفراغ �
 				end
 				
 				local bav = Instance.new("BodyAngularVelocity", hrp)
-				bav.MaxTorque = Vector3.new(0, math.huge, 0)
+				bav.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
 				bav.AngularVelocity = Vector3.new(0, 99999, 0)
 				
 				local bv = Instance.new("BodyVelocity", hrp)
 				bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
 				
 				local startTime = tick()
-				while tick() - startTime < 1.5 do
+				while tick() - startTime < 1.2 do
 					if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then break end
 					hrp.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame
-					bv.Velocity = Vector3.new(math.random(-5000, 5000), 99999, math.random(-5000, 5000))
+					bv.Velocity = Vector3.new(math.random(-6000, 6000), 99999, math.random(-6000, 6000))
 					RunService.RenderStepped:Wait()
 				end
 				
@@ -287,6 +289,9 @@ addButton(tabGame, "🌪️ Fling Murderer (تطير القاتل للفراغ �
 						part.CanCollide = true
 					end
 				end
+				
+				task.wait(0.05)
+				hrp.CFrame = originalCFrame
 			end
 		end)
 	end)

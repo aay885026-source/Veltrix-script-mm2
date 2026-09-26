@@ -1,4 +1,4 @@
--- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition (Fixed Void Kill Loop)
+-- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition (Instant Kill Murder Fix)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -236,20 +236,27 @@ addButton(tabGame, "Pick Up Gun / Drop", false, function()
 	end
 end)
 
-addButton(tabGame, "Lock Murder in Void (حبس القاتل بالفراغ نهائياً للموت)", true, function()
+addButton(tabGame, "Kill Murder Instantly (قتل القاتل فوراً وإجباره على الموت)", true, function()
 	task.spawn(function()
 		for _, p in ipairs(Players:GetPlayers()) do
 			if p ~= LocalPlayer and p.Character then
 				if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then
 					local hrp = p.Character:FindFirstChild("HumanoidRootPart")
-					if hrp then
-						-- تثبيت القاتل في الفراغ لمدة 5 ثوانٍ مستمرة لضمان موته وعدم عودته
-						local startTime = tick()
-						while tick() - startTime < 5 and p.Character and p.Character:FindFirstChild("HumanoidRootPart") do
-							p.Character.HumanoidRootPart.CFrame = CFrame.new(p.Character.HumanoidRootPart.Position.X, -500, p.Character.HumanoidRootPart.Position.Z)
-							p.Character.HumanoidRootPart.Velocity = Vector3.new(0, -100, 0)
-							task.wait(0.1)
-						end
+					local hum = p.Character:FindFirstChild("Humanoid")
+					if hrp and hum then
+						-- تنفيذ القتل المباشر والفوري بدون إتاحة الفرصة للهروب أو الرجوع
+						pcall(function()
+							hum.Health = 0
+							hum.PlatformStand = true
+							for i = 1, 15 do
+								if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+									p.Character.HumanoidRootPart.CFrame = CFrame.new(0, -9999, 0)
+									p.Character.HumanoidRootPart.Velocity = Vector3.new(0, 0, 0)
+									hum.Health = 0
+								end
+								task.wait(0.05)
+							end
+						end)
 					end
 				end
 			end
@@ -276,7 +283,7 @@ end)
 
 addToggle(tabGame, "Kill Murder (الشرطي يطلق على القاتل تلقائياً)", function(v)
 	task.spawn(function()
-		while v and task.wait(0.5) do
+		while v and task.wait(0.3) do
 			pcall(function()
 				local char = LocalPlayer.Character
 				local gun = char and char:FindFirstChild("Gun") or LocalPlayer.Backpack:FindFirstChild("Gun")
@@ -490,9 +497,9 @@ end)
 
 -- ==================== [3. TAB: ESP] ====================
 addSectionTitle(tabEsp, "ESP SETTINGS")
-addToggle(tabEsp, "Players ESP (يكشف القاتل والشريف فوراً)", function(v)
+addToggle(tabEsp, "Players ESP (كشف فوري للقاتل والشريف)", function(v)
 	task.spawn(function()
-		while v and task.wait(0.3) do
+		while v and task.wait(0.1) do
 			for _, p in ipairs(Players:GetPlayers()) do
 				if p ~= LocalPlayer and p.Character then
 					local isMurder = p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") or p.Backpack:FindFirstChild("Revolver") or p.Character:FindFirstChild("Revolver")

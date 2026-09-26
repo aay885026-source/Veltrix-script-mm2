@@ -1,4 +1,4 @@
--- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition (Pre-Round Role ESP & Ultimate Kill)
+-- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition (Fling Murderer Feature)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -236,14 +236,16 @@ addButton(tabGame, "Pick Up Gun / Drop", false, function()
 	end
 end)
 
--- زر القاضية الجديد القوي جداً للقاتل
-addButton(tabGame, "🔥 Ultimate Kill Murder (القاضية للقاتل)", true, function()
+-- زر الـ Fling المدمر للقاتل
+addButton(tabGame, "🌪️ Fling Murderer (تطير القاتل خارج الماب نهائياً)", true, function()
 	task.spawn(function()
 		pcall(function()
 			local char = LocalPlayer.Character
 			local hrp = char and char:FindFirstChild("HumanoidRootPart")
-			if not hrp then return end
+			local hum = char and char:FindFirstChild("Humanoid")
+			if not hrp or not hum then return end
 			
+			-- البحث عن القاتل
 			local targetPlayer = nil
 			for _, p in ipairs(Players:GetPlayers()) do
 				if p ~= LocalPlayer and p.Character then
@@ -257,23 +259,37 @@ addButton(tabGame, "🔥 Ultimate Kill Murder (القاضية للقاتل)", tr
 			if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
 				local tHRP = targetPlayer.Character.HumanoidRootPart
 				
-				local weapon = char:FindFirstChildOfClass("Tool") or LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
-				if weapon then
-					weapon.Parent = char
+				-- إلغاء التصادم وتثبيت الشخصية مؤقتاً لتوليد طاقة الـ Fling
+				for _, part in ipairs(char:GetDescendants()) do
+					if part:IsA("BasePart") then
+						part.CanCollide = false
+					end
 				end
 				
-				for i = 1, 10 do
+				local bav = Instance.new("BodyAngularVelocity", hrp)
+				bav.MaxTorque = Vector3.new(0, math.huge, 0)
+				bav.AngularVelocity = Vector3.new(0, 99999, 0) -- سرعة دوران جنونية تولد الانفجار الحركي
+				
+				local bv = Instance.new("BodyVelocity", hrp)
+				bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+				
+				-- لصق شخصيتك بالقاتل تماماً لفترة قصيرة لتنتقل الطاقة له ويطير
+				local startTime = tick()
+				while tick() - startTime < 1.5 do
 					if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then break end
-					hrp.CFrame = tHRP.CFrame * CFrame.new(0, 0, 1.5) * CFrame.Angles(0, math.rad(180), 0)
-					
-					if weapon then
-						if weapon.Name == "Gun" and weapon:FindFirstChild("Shoot") then
-							weapon.Shoot:FireServer(tHRP.Position, tHRP.Position)
-						else
-							weapon:Activate()
-						end
+					hrp.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame
+					bv.Velocity = Vector3.new(math.random(-5000, 5000), 99999, math.random(-5000, 5000)) -- طيران عمودي وأفقي مرعب
+					RunService.RenderStepped:Wait()
+				end
+				
+				bav:Destroy()
+				bv:Destroy()
+				
+				-- إرجاع التصادم طبيعي
+				for _, part in ipairs(char:GetDescendants()) do
+					if part:IsA("BasePart") then
+						part.CanCollide = true
 					end
-					task.wait(0.02)
 				end
 			end
 		end)

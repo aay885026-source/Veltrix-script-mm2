@@ -1,7 +1,8 @@
--- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition (All Features & Smart Fling Integrated)
+-- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local SetClipboard = toclipboard or setclipboard or Clipboard and Clipboard.set
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
@@ -230,6 +231,30 @@ end
 addSectionTitle(tabProj, "INFO & CREDITS")
 addButton(tabProj, "Veltrix Hub - Created by b8zm", false, function() end)
 
+addSectionTitle(tabProj, "COMMUNITY")
+local dcBtn = Instance.new("TextButton")
+dcBtn.Size = UDim2.new(1, 0, 0, 36)
+dcBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242) -- لون ديسكورد الأزرق
+dcBtn.Text = "💬  سيرفرنا ديسكورد"
+dcBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+dcBtn.Font = Enum.Font.GothamBold
+dcBtn.TextSize = 12
+dcBtn.Parent = tabProj
+Instance.new("UICorner", dcBtn).CornerRadius = UDim.new(0, 6)
+
+dcBtn.MouseButton1Click:Connect(function()
+	if SetClipboard then
+		SetClipboard("https://discord.gg/gkKRKVBF8J")
+		dcBtn.Text = "تم النسخ!"
+		task.wait(1.5)
+		dcBtn.Text = "💬  سيرفرنا ديسكورد"
+	else
+		dcBtn.Text = "المنفذ لا يدعم النسخ التلقائي"
+		task.wait(1.5)
+		dcBtn.Text = "💬  سيرفرنا ديسكورد"
+	end
+end)
+
 -- ==================== [2. TAB: Gameplay] ====================
 addSectionTitle(tabGame, "TOOLS & COMBAT")
 addButton(tabGame, "Pick Up Gun / Drop", false, function()
@@ -237,80 +262,6 @@ addButton(tabGame, "Pick Up Gun / Drop", false, function()
 	if gd and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
 		LocalPlayer.Character.HumanoidRootPart.CFrame = gd.CFrame
 	end
-end)
-
-addButton(tabGame, "🌪️ Fling Murderer (النسخة الذكية المطورة)", true, function()
-	task.spawn(function()
-		pcall(function()
-			local char = LocalPlayer.Character
-			local hrp = char and char:FindFirstChild("HumanoidRootPart")
-			local hum = char and char:FindFirstChild("Humanoid")
-			if not hrp or not hum then return end
-			
-			local originalCFrame = hrp.CFrame
-			local cam = workspace.CurrentCamera
-			local oldSubject = cam.CameraSubject
-			
-			local targetPlayer = nil
-			for _, p in ipairs(Players:GetPlayers()) do
-				if p ~= LocalPlayer and p.Character then
-					if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then
-						targetPlayer = p
-						break
-					end
-				end
-			end
-			
-			if not targetPlayer or not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
-				return
-			end
-			
-			local tHRP = targetPlayer.Character.HumanoidRootPart
-			cam.CameraSubject = targetPlayer.Character:FindFirstChildOfClass("Humanoid") or tHRP
-			
-			hum.PlatformStand = true
-			for _, part in ipairs(char:GetDescendants()) do
-				if part:IsA("BasePart") then part.CanCollide = false end
-			end
-			
-			local bav = Instance.new("BodyAngularVelocity", hrp)
-			bav.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-			bav.AngularVelocity = Vector3.new(0, 99999, 0)
-			
-			local bv = Instance.new("BodyVelocity", hrp)
-			bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-			bv.Velocity = Vector3.new(0, 100, 0)
-			
-			local startTime = tick()
-			while tick() - startTime < 4.5 do
-				if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then break end
-				
-				local angle = tick() * 25
-				local offsetX = math.cos(angle) * 3
-				local offsetZ = math.sin(angle) * 3
-				
-				hrp.CFrame = tHRP.CFrame * CFrame.new(offsetX, -0.5, offsetZ)
-				
-				if (tHRP.Position - originalCFrame.Position).Magnitude > 40 then
-					break
-				end
-				
-				RunService.RenderStepped:Wait()
-			end
-			
-			bav:Destroy()
-			bv:Destroy()
-			hum.PlatformStand = false
-			cam.CameraSubject = oldSubject
-			
-			for _, part in ipairs(char:GetDescendants()) do
-				if part:IsA("BasePart") then part.CanCollide = true end
-			end
-			
-			task.wait(0.05)
-			hrp.CFrame = originalCFrame
-		end)
-	end)
 end)
 
 addButton(tabGame, "Kill All (للقتال كـ قاتل)", true, function()
@@ -603,73 +554,24 @@ addToggle(tabAuto, "Auto Teleport At Spawn", function(v) print(v) end)
 addToggle(tabAuto, "Auto Prestige", function(v) print(v) end)
 
 -- ==================== [5. TAB: Coin Farm] ====================
-addSectionTitle(tabCoin, "COIN FARM (تجميع آلي مع إصلاح المشي)")
-local currentFarmSpeed = 22
-local noclipConnection = nil
-local isCoinFarmActive = false
-
-addToggle(tabCoin, "تفعيل جمع الكوينات المستمر", function(v)
-	isCoinFarmActive = v
-	
-	if v then
-		noclipConnection = RunService.Stepped:Connect(function()
-			local char = LocalPlayer.Character
-			if char then
-				for _, part in ipairs(char:GetDescendants()) do
-					if part:IsA("BasePart") then part.CanCollide = false end
-				end
-			end
-		end)
-	else
-		if noclipConnection then
-			noclipConnection:Disconnect()
-			noclipConnection = nil
-		end
-		pcall(function()
-			local char = LocalPlayer.Character
-			if char then
-				for _, part in ipairs(char:GetDescendants()) do
-					if part:IsA("BasePart") then part.CanCollide = true end
-				end
-				local hum = char:FindFirstChild("Humanoid")
-				if hum then
-					hum.WalkSpeed = 16
-					hum:Move(Vector3.new(0,0,0), true)
-				end
-			end
-		end)
-	end
-
+addSectionTitle(tabCoin, "COIN FARM (التجميع السلس القديم)")
+addToggle(tabCoin, "تفعيل جمع الكوينات", function(v)
 	task.spawn(function()
-		while isCoinFarmActive do
+		while v and task.wait(0.4) do
 			pcall(function()
 				local char = LocalPlayer.Character
-				local hum = char and char:FindFirstChild("Humanoid")
 				local hrp = char and char:FindFirstChild("HumanoidRootPart")
-
-				if hum and hrp and isCoinFarmActive then
-					hum.WalkSpeed = currentFarmSpeed
-					
-					local closestCoin = nil
-					local shortestDist = math.huge
-					
-					for _, obj in ipairs(workspace:GetDescendants()) do
-						if obj:IsA("BasePart") and (obj.Name == "Coin" or obj.Name:lower():find("coin") or obj.Parent.Name:lower():find("coin")) then
-							local dist = (hrp.Position - obj.Position).Magnitude
-							if dist < shortestDist then
-								shortestDist = dist
-								closestCoin = obj
-							end
+				if hrp then
+					for _, coin in ipairs(workspace:GetDescendants()) do
+						if coin:IsA("BasePart") and (coin.Name == "Coin" or coin.Name:lower():find("coin") or coin.Parent.Name:lower():find("coin")) then
+							hrp.CFrame = coin.CFrame
+							task.wait(0.1)
 						end
-					end
-					
-					if closestCoin then
-						hrp.CFrame = CFrame.new(closestCoin.Position + Vector3.new(0, 2, 0))
 					end
 				end
 			end)
-			task.wait(0.3)
 		end
 	end)
 end)
 
+print("Veltrix Hub Loaded Successfully!")

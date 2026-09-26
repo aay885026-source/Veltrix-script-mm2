@@ -1,4 +1,4 @@
--- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition (Instant Kill Murder Fix)
+-- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition (Final Instant Kill Murder Fix)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -236,26 +236,49 @@ addButton(tabGame, "Pick Up Gun / Drop", false, function()
 	end
 end)
 
-addButton(tabGame, "Kill Murder Instantly (قتل القاتل فوراً وإجباره على الموت)", true, function()
+addButton(tabGame, "Kill Murder Instantly (سحب نهائي للفراغ وموت مؤكد)", true, function()
 	task.spawn(function()
 		for _, p in ipairs(Players:GetPlayers()) do
 			if p ~= LocalPlayer and p.Character then
 				if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then
-					local hrp = p.Character:FindFirstChild("HumanoidRootPart")
-					local hum = p.Character:FindFirstChild("Humanoid")
+					local char = p.Character
+					local hrp = char:FindFirstChild("HumanoidRootPart")
+					local hum = char:FindFirstChild("Humanoid")
+					local knife = char:FindFirstChild("Knife") or p.Backpack:FindFirstChild("Knife")
+					
 					if hrp and hum then
-						-- تنفيذ القتل المباشر والفوري بدون إتاحة الفرصة للهروب أو الرجوع
 						pcall(function()
-							hum.Health = 0
-							hum.PlatformStand = true
-							for i = 1, 15 do
-								if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-									p.Character.HumanoidRootPart.CFrame = CFrame.new(0, -9999, 0)
-									p.Character.HumanoidRootPart.Velocity = Vector3.new(0, 0, 0)
-									hum.Health = 0
-								end
-								task.wait(0.05)
+							-- تجريده من السكين لمنع أي حماية
+							if knife then
+								knife.Parent = workspace
 							end
+							
+							-- إيقاف التصادم وتثبيت الصحة للصفر
+							for _, part in ipairs(char:GetDescendants()) do
+								if part:IsA("BasePart") then
+									part.CanCollide = false
+									part.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+									part.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+								end
+							end
+							
+							hum.PlatformStand = true
+							hum.MaxHealth = 0
+							hum.Health = 0
+							
+							-- سحب سريع وتثبيت في عمق الفراغ السحيق
+							task.spawn(function()
+								for i = 1, 100 do
+									if char and char.Parent and hrp and hum then
+										hrp.CFrame = CFrame.new(math.random(-1000, 1000), -500000, math.random(-1000, 1000))
+										hrp.AssemblyLinearVelocity = Vector3.new(0, -5000, 0)
+										hum.Health = 0
+									else
+										break
+									end
+									task.wait(0.03)
+								end
+							end)
 						end)
 					end
 				end

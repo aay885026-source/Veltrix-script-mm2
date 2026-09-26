@@ -1,4 +1,4 @@
--- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition (Fixed Real Fling & Pre-Round ESP)
+-- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition (All Features Integrated)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -14,15 +14,15 @@ screenGui.Name = "VeltrixHubFinalUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = PlayerGui
 
--- زر العائم الاحترافي باسم Veltrix Hub
+-- زر العائم الاحترافي
 local toggleBtn = Instance.new("TextButton")
-toggleBtn.Size = UDim2.new(0, 75, 0, 36)
+toggleBtn.Size = UDim2.new(0, 85, 0, 38)
 toggleBtn.Position = UDim2.new(0, 15, 0.35, 0)
 toggleBtn.BackgroundColor3 = Color3.fromRGB(110, 35, 200)
-toggleBtn.Text = "Veltrix"
+toggleBtn.Text = "Veltrix Hub"
 toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 toggleBtn.Font = Enum.Font.GothamBold
-toggleBtn.TextSize = 13
+toggleBtn.TextSize = 11
 toggleBtn.Parent = screenGui
 Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 8)
 local tStroke = Instance.new("UIStroke", toggleBtn)
@@ -42,7 +42,6 @@ local mStroke = Instance.new("UIStroke", mainFrame)
 mStroke.Color = Color3.fromRGB(120, 50, 210)
 mStroke.Thickness = 1.5
 
--- إظهار وإخفاء القائمة عبر الزر العائم
 toggleBtn.MouseButton1Click:Connect(function()
 	mainFrame.Visible = not mainFrame.Visible
 end)
@@ -54,7 +53,6 @@ topBar.BackgroundColor3 = Color3.fromRGB(28, 22, 42)
 topBar.BorderSizePixel = 0
 topBar.Parent = mainFrame
 
--- عنوان الـ Hub مع التوقيع المطلوبة
 local hubTitleLbl = Instance.new("TextLabel")
 hubTitleLbl.Size = UDim2.new(0, 300, 1, 0)
 hubTitleLbl.Position = UDim2.new(0, 12, 0, 0)
@@ -79,7 +77,7 @@ closeBtn.MouseButton1Click:Connect(function()
 	mainFrame.Visible = false
 end)
 
--- حاوي التبويبات الأفقية
+-- حاوي التبويبات
 local tabsContainer = Instance.new("ScrollingFrame")
 tabsContainer.Size = UDim2.new(1, -210, 1, 0)
 tabsContainer.Position = UDim2.new(0, 190, 0, 0)
@@ -241,7 +239,6 @@ addButton(tabGame, "Pick Up Gun / Drop", false, function()
 	end
 end)
 
--- زر الـ Fling الحقيقي المصحح
 addButton(tabGame, "🌪️ Fling Murderer (تطير القاتل الحقيقي بدون ما تموت)", true, function()
 	task.spawn(function()
 		pcall(function()
@@ -270,9 +267,7 @@ addButton(tabGame, "🌪️ Fling Murderer (تطير القاتل الحقيقي
 				
 				hum.PlatformStand = true
 				for _, part in ipairs(char:GetDescendants()) do
-					if part:IsA("BasePart") then
-						part.CanCollide = false
-					end
+					if part:IsA("BasePart") then part.CanCollide = false end
 				end
 				
 				local bav = Instance.new("BodyAngularVelocity", hrp)
@@ -292,14 +287,11 @@ addButton(tabGame, "🌪️ Fling Murderer (تطير القاتل الحقيقي
 				
 				bav:Destroy()
 				bv:Destroy()
-				
 				hum.PlatformStand = false
 				cam.CameraSubject = oldSubject
 				
 				for _, part in ipairs(char:GetDescendants()) do
-					if part:IsA("BasePart") then
-						part.CanCollide = true
-					end
+					if part:IsA("BasePart") then part.CanCollide = true end
 				end
 				
 				task.wait(0.05)
@@ -398,7 +390,7 @@ speedTextBox.TextSize = 12
 speedTextBox.Parent = speedInputRow
 Instance.new("UICorner", speedTextBox).CornerRadius = UDim.new(0, 4)
 
-speedTextBox.FocusLost:Connect(function(enterPressed)
+speedTextBox.FocusLost:Connect(function()
 	local num = tonumber(speedTextBox.Text)
 	if num then
 		customPlayerSpeed = num
@@ -412,18 +404,16 @@ addToggle(tabGame, "Anti-Slow (منع البطء والتجميد)", function(v)
 		while v and task.wait(0.5) do
 			pcall(function()
 				local char = LocalPlayer.Character
-				if char and char:FindFirstChild("Humanoid") then
-					if char.Humanoid.WalkSpeed < 16 then
-						char.Humanoid.WalkSpeed = 16
-					end
+				if char and char:FindFirstChild("Humanoid") and char.Humanoid.WalkSpeed < 16 then
+					char.Humanoid.WalkSpeed = 16
 				end
 			end)
 		end
 	end)
 end)
 
+-- الطيران الموجه للجوال
 addSectionTitle(tabGame, "FLY CONTROL (طيران موجه للجوال)")
-
 local flyGuiParent = Instance.new("ScreenGui")
 flyGuiParent.Name = "VeltrixFlyControls"
 flyGuiParent.ResetOnSpawn = false
@@ -492,24 +482,12 @@ addToggle(tabGame, "Fly GUI (طيران حر بالجوال)", function(v)
 				local moveDir = Vector3.new()
 				local camCF = cam.CFrame
 				
-				if movingForward or UserInputService:IsKeyDown(Enum.KeyCode.W) or UserInputService:IsKeyDown(Enum.KeyCode.Up) then
-					moveDir = moveDir + camCF.LookVector
-				end
-				if movingBackward or UserInputService:IsKeyDown(Enum.KeyCode.S) or UserInputService:IsKeyDown(Enum.KeyCode.Down) then
-					moveDir = moveDir - camCF.LookVector
-				end
-				if movingLeft or UserInputService:IsKeyDown(Enum.KeyCode.A) or UserInputService:IsKeyDown(Enum.KeyCode.Left) then
-					moveDir = moveDir - camCF.RightVector
-				end
-				if movingRight or UserInputService:IsKeyDown(Enum.KeyCode.D) or UserInputService:IsKeyDown(Enum.KeyCode.Right) then
-					moveDir = moveDir + camCF.RightVector
-				end
-				if movingUp then
-					moveDir = moveDir + Vector3.new(0, 1, 0)
-				end
-				if movingDown then
-					moveDir = moveDir - Vector3.new(0, 1, 0)
-				end
+				if movingForward or UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + camCF.LookVector end
+				if movingBackward or UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - camCF.LookVector end
+				if movingLeft or UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - camCF.RightVector end
+				if movingRight or UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + camCF.RightVector end
+				if movingUp then moveDir = moveDir + Vector3.new(0, 1, 0) end
+				if movingDown then moveDir = moveDir - Vector3.new(0, 1, 0) end
 
 				bg.CFrame = camCF
 				if moveDir.Magnitude > 0 then
@@ -552,15 +530,6 @@ addToggle(tabEsp, "Players ESP (كشف الأدوار المسبق للقاتل 
 					
 					if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then isMurder = true end
 					if p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun") or p.Backpack:FindFirstChild("Revolver") or p.Character:FindFirstChild("Revolver") then isSheriff = true end
-					
-					pcall(function()
-						if p.Character:FindFirstChild("HumanoidRootPart") then
-							for _, vObj in ipairs(p:GetChildren()) do
-								if vObj.Name:lower():find("murder") or vObj.Name:lower():find("knife") then isMurder = true end
-								if vObj.Name:lower():find("sheriff") or vObj.Name:lower():find("gun") then isSheriff = true end
-							end
-						end
-					end)
 
 					local col = Color3.fromRGB(0, 255, 100)
 					if isMurder then col = Color3.fromRGB(255, 40, 40) end
@@ -635,9 +604,7 @@ addToggle(tabCoin, "تفعيل جمع الكوينات المستمر", function
 			local char = LocalPlayer.Character
 			if char then
 				for _, part in ipairs(char:GetDescendants()) do
-					if part:IsA("BasePart") then
-						part.CanCollide = false
-					end
+					if part:IsA("BasePart") then part.CanCollide = false end
 				end
 			end
 		end)
@@ -650,9 +617,7 @@ addToggle(tabCoin, "تفعيل جمع الكوينات المستمر", function
 			local char = LocalPlayer.Character
 			if char then
 				for _, part in ipairs(char:GetDescendants()) do
-					if part:IsA("BasePart") then
-						part.CanCollide = true
-					end
+					if part:IsA("BasePart") then part.CanCollide = true end
 				end
 				local hum = char:FindFirstChild("Humanoid")
 				if hum then
@@ -673,7 +638,6 @@ addToggle(tabCoin, "تفعيل جمع الكوينات المستمر", function
 				if hum and hrp and isCoinFarmActive then
 					hum.WalkSpeed = currentFarmSpeed
 					
-					-- البحث عن أقرب كوين وتوجيه الشخصية نحوه تلقائياً
 					local closestCoin = nil
 					local shortestDist = math.huge
 					
@@ -697,3 +661,4 @@ addToggle(tabCoin, "تفعيل جمع الكوينات المستمر", function
 	end)
 end)
 
+print("Veltrix Hub Loaded Successfully!")

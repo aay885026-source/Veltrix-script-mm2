@@ -1,4 +1,4 @@
--- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition (Official Kill Method)
+-- Veltrix Hub (by : b8zm) - MM2 Ultimate Edition (Pre-Round Role ESP & Ultimate Kill)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -236,38 +236,44 @@ addButton(tabGame, "Pick Up Gun / Drop", false, function()
 	end
 end)
 
-addButton(tabGame, "Kill Murder Instantly (القتل الفعلي عبر رصاصة النظام)", true, function()
+-- زر القاضية الجديد القوي جداً للقاتل
+addButton(tabGame, "🔥 Ultimate Kill Murder (القاضية للقاتل)", true, function()
 	task.spawn(function()
 		pcall(function()
 			local char = LocalPlayer.Character
-			local gun = char and char:FindFirstChild("Gun") or LocalPlayer.Backpack:FindFirstChild("Gun")
+			local hrp = char and char:FindFirstChild("HumanoidRootPart")
+			if not hrp then return end
 			
+			local targetPlayer = nil
 			for _, p in ipairs(Players:GetPlayers()) do
 				if p ~= LocalPlayer and p.Character then
-					local isMurder = p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife")
-					if isMurder then
-						local tHRP = p.Character:FindFirstChild("HumanoidRootPart")
-						if tHRP then
-							if gun then
-								gun.Parent = char
-								for i = 1, 5 do
-									gun.Shoot:FireServer(tHRP.Position, tHRP.Position)
-									task.wait(0.05)
-								end
-							else
-								if char and char:FindFirstChild("HumanoidRootPart") then
-									char.HumanoidRootPart.CFrame = tHRP.CFrame * CFrame.new(0, 0, 3)
-									task.wait(0.05)
-									for _, tool in ipairs(LocalPlayer.Backpack:GetChildren()) do
-										if tool:IsA("Tool") then
-											tool.Parent = char
-											tool:Activate()
-										end
-									end
-								end
-							end
+					if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then
+						targetPlayer = p
+						break
+					end
+				end
+			end
+			
+			if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+				local tHRP = targetPlayer.Character.HumanoidRootPart
+				
+				local weapon = char:FindFirstChildOfClass("Tool") or LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
+				if weapon then
+					weapon.Parent = char
+				end
+				
+				for i = 1, 10 do
+					if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then break end
+					hrp.CFrame = tHRP.CFrame * CFrame.new(0, 0, 1.5) * CFrame.Angles(0, math.rad(180), 0)
+					
+					if weapon then
+						if weapon.Name == "Gun" and weapon:FindFirstChild("Shoot") then
+							weapon.Shoot:FireServer(tHRP.Position, tHRP.Position)
+						else
+							weapon:Activate()
 						end
 					end
+					task.wait(0.02)
 				end
 			end
 		end)
@@ -506,18 +512,30 @@ addToggle(tabGame, "Noclip", function(v)
 end)
 
 -- ==================== [3. TAB: ESP] ====================
-addSectionTitle(tabEsp, "ESP SETTINGS")
-addToggle(tabEsp, "Players ESP (كشف فوري للقاتل والشريف)", function(v)
+addSectionTitle(tabEsp, "ESP SETTINGS (يكشف الدور قبل بدء الجولة)")
+addToggle(tabEsp, "Players ESP (كشف الأدوار المسبق للقاتل والشريف)", function(v)
 	task.spawn(function()
-		while v and task.wait(0.1) do
+		while v and task.wait(0.2) do
 			for _, p in ipairs(Players:GetPlayers()) do
 				if p ~= LocalPlayer and p.Character then
-					local isMurder = p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") or p.Backpack:FindFirstChild("Revolver") or p.Character:FindFirstChild("Revolver")
-					local isSheriff = p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun")
+					local isMurder = false
+					local isSheriff = false
 					
-					local col = Color3.fromRGB(0, 255, 100)
-					if isMurder then col = Color3.fromRGB(255, 40, 40) end
-					if isSheriff then col = Color3.fromRGB(40, 120, 255) end
+					if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then isMurder = true end
+					if p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun") or p.Backpack:FindFirstChild("Revolver") or p.Character:FindFirstChild("Revolver") then isSheriff = true end
+					
+					pcall(function()
+						if p.Character:FindFirstChild("HumanoidRootPart") then
+							for _, vObj in ipairs(p:GetChildren()) do
+								if vObj.Name:lower():find("murder") or vObj.Name:lower():find("knife") then isMurder = true end
+								if vObj.Name:lower():find("sheriff") or vObj.Name:lower():find("gun") then isSheriff = true end
+							end
+						end
+					end)
+
+					local col = Color3.fromRGB(0, 255, 100) -- بريء
+					if isMurder then col = Color3.fromRGB(255, 40, 40) end   -- قاتل (أحمر)
+					if isSheriff then col = Color3.fromRGB(40, 120, 255) end -- شريف (أزرق)
 
 					local hl = p.Character:FindFirstChild("VeltrixESP")
 					if not hl then

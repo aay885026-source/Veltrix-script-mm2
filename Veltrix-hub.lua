@@ -375,6 +375,22 @@ addToggle(tabGame, "Anti-Slow (منع البطء والتجميد)", function(v)
 	end)
 end)
 
+-- ميزة الاختفاء (Invisibility) الجديدة
+addToggle(tabGame, "Invisibility (اختفاء شخصيتك عن الآخرين)", function(v)
+	pcall(function()
+		local char = LocalPlayer.Character
+		if char then
+			for _, part in ipairs(char:GetDescendants()) do
+				if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+					part.Transparency = v and 1 or 0
+				elseif part:IsA("Decal") then
+					part.Transparency = v and 1 or 0
+				end
+			end
+		end
+	end)
+end)
+
 -- الطيران الموجه للجوال
 addSectionTitle(tabGame, "FLY CONTROL (طيران موجه للجوال)")
 local flyGuiParent = Instance.new("ScreenGui")
@@ -540,12 +556,25 @@ addToggle(tabEsp, "Coin ESP (كشف أماكن الكوينات بالخريطة
 		end
 		if not v then
 			for _, coin in ipairs(workspace:GetDescendants()) do
-				if coin:IsA("BasePart") and coin:FindFirstChild("CoinESP") then
+				if coin:IsA("BasePart" ) and coin:FindFirstChild("CoinESP") then
 					coin.CoinESP:Destroy()
 				end
 			end
 		end
 	end)
+end)
+
+-- ميزة X-Ray (رؤية عبر الجدران والأجزاء) الجديدة
+addToggle(tabEsp, "X-Ray (رؤية وجدران شفافة)", function(v)
+	for _, obj in ipairs(workspace:GetDescendants()) do
+		if obj:IsA("BasePart") and not obj.Parent:FindFirstChild("Humanoid") then
+			if v then
+				obj.LocalTransparencyModifier = 0.65 -- شفافية الجدران
+			else
+				obj.LocalTransparencyModifier = 0
+			end
+		end
+	end
 end)
 
 -- ==================== [4. TAB: Auto Farm] ====================
@@ -573,4 +602,3 @@ addToggle(tabCoin, "تفعيل جمع الكوينات", function(v)
 		end
 	end)
 end)
-

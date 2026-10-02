@@ -281,6 +281,68 @@ addButton(tabGame, "Kill All (للقتال كـ قاتل)", true, function()
 	end)
 end)
 
+-- أدوات الـ Fling المخصصة
+local function executeFlingTarget(targetChar)
+	pcall(function()
+		local character = LocalPlayer.Character
+		local hrp = character and character:FindFirstChild("HumanoidRootPart")
+		local tHrp = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+		if not hrp or not tHrp then return end
+
+		local bv = Instance.new("BodyVelocity")
+		bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+		bv.Velocity = Vector3.new(99999, 99999, 99999)
+		bv.Parent = hrp
+
+		local startTime = tick()
+		while tick() - startTime < 1.2 and character and character.Parent and targetChar and targetChar.Parent do
+			hrp.CFrame = tHrp.CFrame
+			hrp.CFrame = hrp.CFrame * CFrame.Angles(math.random(-50, 50), math.random(-50, 50), math.random(-50, 50))
+			RunService.RenderStepped:Wait()
+		end
+		if bv then bv:Destroy() end
+	end)
+end
+
+addButton(tabGame, "🌪️ Fling Murder (طرد القاتل)", true, function()
+	pcall(function()
+		for _, p in ipairs(Players:GetPlayers()) do
+			if p ~= LocalPlayer and p.Character then
+				if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then
+					executeFlingTarget(p.Character)
+					break
+				end
+			end
+		end
+	end)
+end)
+
+addButton(tabGame, "🌪️ Fling Sheriff (طرد الشريف)", true, function()
+	pcall(function()
+		for _, p in ipairs(Players:GetPlayers()) do
+			if p ~= LocalPlayer and p.Character then
+				if p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun") or p.Backpack:FindFirstChild("Revolver") or p.Character:FindFirstChild("Revolver") then
+					executeFlingTarget(p.Character)
+					break
+				end
+			end
+		end
+	end)
+end)
+
+addButton(tabGame, "🌪️ Fling All (طرد الكل واحد ورا واحد)", true, function()
+	task.spawn(function()
+		pcall(function()
+			for _, p in ipairs(Players:GetPlayers()) do
+				if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+					executeFlingTarget(p.Character)
+					task.wait(0.3)
+				end
+			end
+		end)
+	end)
+end)
+
 addToggle(tabGame, "Kill Murder (الشرطي يطلق على القاتل تلقائياً)", function(v)
 	task.spawn(function()
 		while v and task.wait(0.3) do
@@ -305,24 +367,25 @@ addToggle(tabGame, "Kill Murder (الشرطي يطلق على القاتل تل�
 	end)
 end)
 
-addSectionTitle(tabGame, "PLAYER SPEED & STABILS")
+addSectionTitle(tabGame, "PLAYER SPEED & STEALTH")
 local customPlayerSpeed = 22
+local speedConnection = nil
 
 addToggle(tabGame, "تفعيل سرعة اللاعب المخصصة", function(v)
-	task.spawn(function()
-		while v and task.wait(0.2) do
+	if speedConnection then speedConnection:Disconnect() speedConnection = nil end
+	if v then
+		speedConnection = RunService.RenderStepped:Connect(function()
 			local char = LocalPlayer.Character
 			if char and char:FindFirstChild("Humanoid") then
 				char.Humanoid.WalkSpeed = customPlayerSpeed
 			end
+		end)
+	else
+		local char = LocalPlayer.Character
+		if char and char:FindFirstChild("Humanoid") then
+			char.Humanoid.WalkSpeed = 16
 		end
-		if not v then
-			local char = LocalPlayer.Character
-			if char and char:FindFirstChild("Humanoid") then
-				char.Humanoid.WalkSpeed = 16
-			end
-		end
-	end)
+	end
 end)
 
 local speedInputRow = Instance.new("Frame")
@@ -362,6 +425,28 @@ speedTextBox.FocusLost:Connect(function()
 	end
 end)
 
+-- الاختفاء الشامل (يخفي الشخصية، السكين، والمسدس وكل شيء)
+addToggle(tabGame, "Invisibility (اختفاء تام للشخصية والأسلحة)", function(v)
+	pcall(function()
+		local char = LocalPlayer.Character
+		if not char then return end
+		for _, part in ipairs(char:GetDescendants()) do
+			if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+				part.Transparency = v and 1 or 0
+			elseif part:IsA("Decal") then
+				part.Transparency = v and 1 or 0
+			end
+		end
+		for _, item in ipairs(char:GetChildren()) do
+			if item:IsA("Tool") then
+				for _, p in ipairs(item:GetDescendants()) do
+					if p:IsA("BasePart") then p.Transparency = v and 1 or 0 end
+				end
+			end
+		end
+	end)
+end)
+
 addToggle(tabGame, "Anti-Slow (منع البطء والتجميد)", function(v)
 	task.spawn(function()
 		while v and task.wait(0.5) do
@@ -375,24 +460,8 @@ addToggle(tabGame, "Anti-Slow (منع البطء والتجميد)", function(v)
 	end)
 end)
 
--- ميزة الاختفاء (Invisibility) الجديدة
-addToggle(tabGame, "Invisibility (اختفاء شخصيتك عن الآخرين)", function(v)
-	pcall(function()
-		local char = LocalPlayer.Character
-		if char then
-			for _, part in ipairs(char:GetDescendants()) do
-				if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-					part.Transparency = v and 1 or 0
-				elseif part:IsA("Decal") then
-					part.Transparency = v and 1 or 0
-				end
-			end
-		end
-	end)
-end)
-
--- الطيران الموجه للجوال
-addSectionTitle(tabGame, "FLY CONTROL (طيران موجه للجوال)")
+-- الطيران الحر الموجه للجوال
+addSectionTitle(tabGame, "FLY CONTROL (طيران حر موجه للجوال)")
 local flyGuiParent = Instance.new("ScreenGui")
 flyGuiParent.Name = "VeltrixFlyControls"
 flyGuiParent.ResetOnSpawn = false
@@ -438,7 +507,7 @@ btnDown.MouseButton1Up:Connect(function() movingDown = false end)
 
 local flying = false
 local flySpeed = 50
-local bv, bg
+local freeCamRun = nil
 
 addToggle(tabGame, "Fly GUI (طيران حر بالجوال)", function(v)
 	flying = v
@@ -449,39 +518,44 @@ addToggle(tabGame, "Fly GUI (طيران حر بالجوال)", function(v)
 	local cam = workspace.CurrentCamera
 
 	if flying then
-		bv = Instance.new("BodyVelocity", hrp)
-		bg = Instance.new("BodyGyro", hrp)
+		local bv = Instance.new("BodyVelocity", hrp)
+		local bg = Instance.new("BodyGyro", hrp)
 		bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
 		bv.Velocity = Vector3.new(0, 0, 0)
 		bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
 		bg.CFrame = hrp.CFrame
 
-		task.spawn(function()
-			while flying and char and char.Parent do
-				local moveDir = Vector3.new()
-				local camCF = cam.CFrame
-				
-				if movingForward or UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + camCF.LookVector end
-				if movingBackward or UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - camCF.LookVector end
-				if movingLeft or UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - camCF.RightVector end
-				if movingRight or UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + camCF.RightVector end
-				if movingUp then moveDir = moveDir + Vector3.new(0, 1, 0) end
-				if movingDown then moveDir = moveDir - Vector3.new(0, 1, 0) end
-
-				bg.CFrame = camCF
-				if moveDir.Magnitude > 0 then
-					bv.Velocity = moveDir.Unit * flySpeed
-				else
-					bv.Velocity = Vector3.new(0, 0.1, 0)
-				end
-				RunService.RenderStepped:Wait()
+		freeCamRun = RunService.RenderStepped:Connect(function()
+			if not flying or not char or not char.Parent then
+				if bv then bv:Destroy() end
+				if bg then bg:Destroy() end
+				if freeCamRun then freeCamRun:Disconnect() end
+				return
 			end
-			if bv then bv:Destroy() end
-			if bg then bg:Destroy() end
+			local moveDir = Vector3.new()
+			local camCF = cam.CFrame
+			
+			if movingForward or UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + camCF.LookVector end
+			if movingBackward or UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - camCF.LookVector end
+			if movingLeft or UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - camCF.RightVector end
+			if movingRight or UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + camCF.RightVector end
+			if movingUp then moveDir = moveDir + Vector3.new(0, 1, 0) end
+			if movingDown then moveDir = moveDir - Vector3.new(0, 1, 0) end
+
+			bg.CFrame = camCF
+			if moveDir.Magnitude > 0 then
+				bv.Velocity = moveDir.Unit * flySpeed
+			else
+				bv.Velocity = Vector3.new(0, 0.1, 0)
+			end
 		end)
 	else
-		if bv then bv:Destroy() end
-		if bg then bg:Destroy() end
+		if freeCamRun then freeCamRun:Disconnect() end
+		for _, part in ipairs(hrp:GetChildren()) do
+			if part:IsA("BodyVelocity") or part:IsA("BodyGyro") then
+				part:Destroy()
+			end
+		end
 	end
 end)
 
@@ -498,10 +572,10 @@ addToggle(tabGame, "Noclip", function(v)
 end)
 
 -- ==================== [3. TAB: ESP] ====================
-addSectionTitle(tabEsp, "ESP SETTINGS (يكشف الدور قبل بدء الجولة)")
+addSectionTitle(tabEsp, "ESP SETTINGS (يكشف الدور فوراً أول ما تنتقل للسباون)")
 addToggle(tabEsp, "Players ESP (كشف الأدوار المسبق للقاتل والشريف)", function(v)
 	task.spawn(function()
-		while v and task.wait(0.2) do
+		while v and task.wait(0.1) do
 			for _, p in ipairs(Players:GetPlayers()) do
 				if p ~= LocalPlayer and p.Character then
 					local isMurder = false
@@ -541,7 +615,7 @@ addToggle(tabEsp, "Coin ESP (كشف أماكن الكوينات بالخريطة
 	task.spawn(function()
 		while v and task.wait(1) do
 			for _, coin in ipairs(workspace:GetDescendants()) do
-				if coin:IsA("BasePart") and (coin.Name == "Coin" or coin.Name:lower():find("coin") or coin.Name:lower():find("gold") or coin.Parent.Name:lower():find("coin")) then
+				if coin:IsA("BasePart") and (coin.Name == "Coin" or coin.Name:lower():find("coin") or coin.Parent.Name:lower():find("coin")) then
 					local hl = coin:FindFirstChild("CoinESP")
 					if not hl then
 						hl = Instance.new("Highlight", coin)
@@ -556,7 +630,7 @@ addToggle(tabEsp, "Coin ESP (كشف أماكن الكوينات بالخريطة
 		end
 		if not v then
 			for _, coin in ipairs(workspace:GetDescendants()) do
-				if coin:IsA("BasePart" ) and coin:FindFirstChild("CoinESP") then
+				if coin:IsA("BasePart") and coin:FindFirstChild("CoinESP") then
 					coin.CoinESP:Destroy()
 				end
 			end
@@ -564,17 +638,29 @@ addToggle(tabEsp, "Coin ESP (كشف أماكن الكوينات بالخريطة
 	end)
 end)
 
--- ميزة X-Ray (رؤية عبر الجدران والأجزاء) الجديدة
-addToggle(tabEsp, "X-Ray (رؤية وجدران شفافة)", function(v)
-	for _, obj in ipairs(workspace:GetDescendants()) do
-		if obj:IsA("BasePart") and not obj.Parent:FindFirstChild("Humanoid") then
-			if v then
-				obj.LocalTransparencyModifier = 0.65 -- شفافية الجدران
-			else
-				obj.LocalTransparencyModifier = 0
-			end
+addToggle(tabEsp, "X-Ray (رؤية عبر الجدران والمباني)", function(v)
+	task.spawn(function()
+		while v and task.wait(0.5) do
+			pcall(function()
+				for _, obj in ipairs(workspace:GetDescendants()) do
+					if obj:IsA("BasePart") and not obj:IsDescendantOf(Players.LocalPlayer.Character) then
+						if obj.Name ~= "HumanoidRootPart" and not obj.Parent:FindFirstChild("Humanoid") then
+							obj.Transparency = v and 0.6 or 0
+						end
+					end
+				end
+			end)
 		end
-	end
+		if not v then
+			pcall(function()
+				for _, obj in ipairs(workspace:GetDescendants()) do
+					if obj:IsA("BasePart") then
+						obj.Transparency = 0
+					end
+				end
+			end)
+		end
+	end)
 end)
 
 -- ==================== [4. TAB: Auto Farm] ====================
@@ -583,22 +669,83 @@ addToggle(tabAuto, "Auto Teleport At Spawn", function(v) print(v) end)
 addToggle(tabAuto, "Auto Prestige", function(v) print(v) end)
 
 -- ==================== [5. TAB: Coin Farm] ====================
-addSectionTitle(tabCoin, "COIN FARM (التجميع السلس القديم)")
-addToggle(tabCoin, "تفعيل جمع الكوينات", function(v)
-	task.spawn(function()
-		while v and task.wait(0.4) do
-			pcall(function()
-				local char = LocalPlayer.Character
-				local hrp = char and char:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					for _, coin in ipairs(workspace:GetDescendants()) do
-						if coin:IsA("BasePart") and (coin.Name == "Coin" or coin.Name:lower():find("coin") or coin.Parent.Name:lower():find("coin")) then
-							hrp.CFrame = coin.CFrame
-							task.wait(0.1)
+addSectionTitle(tabCoin, "COIN FARM (المشي التلقائي للكوينات)")
+local coinFarmActive = false
+local coinWalkSpeed = 22
+
+addToggle(tabCoin, "تفعيل المشي التلقائي للكوينات", function(v)
+	coinFarmActive = v
+	if v then
+		task.spawn(function()
+			while coinFarmActive do
+				task.wait(0.2)
+				pcall(function()
+					local char = LocalPlayer.Character
+					local humanoid = char and char:FindFirstChild("Humanoid")
+					local hrp = char and char:FindFirstChild("HumanoidRootPart")
+					
+					if humanoid and hrp and coinFarmActive then
+						for _, coin in ipairs(workspace:GetDescendants()) do
+							if not coinFarmActive then break end
+							if coin:IsA("BasePart") and (coin.Name == "Coin" or coin.Name:lower():find("coin") or coin.Parent.Name:lower():find("coin")) then
+								humanoid.WalkSpeed = coinWalkSpeed
+								humanoid:MoveTo(coin.Position)
+								
+								-- الانتظار حتى يقترب اللاعب من الكوين أو يتم جمعه
+								local startTime = tick()
+								while coinFarmActive and coin and coin.Parent and (hrp.Position - coin.Position).Magnitude > 4 and tick() - startTime < 4 do
+									task.wait(0.1)
+								end
+							end
 						end
 					end
-				end
-			end)
-		end
-	end)
+				end)
+			end
+		end)
+	else
+		pcall(function()
+			local char = LocalPlayer.Character
+			if char and char:FindFirstChild("Humanoid") then
+				char.Humanoid.WalkSpeed = 16
+			end
+		end)
+	end
+end)
+
+-- خانة تحديد سرعة الكوين تحت زر التفعيل
+local coinSpeedRow = Instance.new("Frame")
+coinSpeedRow.Size = UDim2.new(1, 0, 0, 32)
+coinSpeedRow.BackgroundColor3 = Color3.fromRGB(25, 20, 38)
+coinSpeedRow.Parent = tabCoin
+Instance.new("UICorner", coinSpeedRow).CornerRadius = UDim.new(0, 5)
+
+local coinSpeedLbl = Instance.new("TextLabel")
+coinSpeedLbl.Size = UDim2.new(0.6, 0, 1, 0)
+coinSpeedLbl.Position = UDim2.new(0, 8, 0, 0)
+coinSpeedLbl.BackgroundTransparency = 1
+coinSpeedLbl.Text = "سرعة تجميع الكوينات:"
+coinSpeedLbl.TextColor3 = Color3.fromRGB(210, 200, 230)
+coinSpeedLbl.Font = Enum.Font.GothamMedium
+coinSpeedLbl.TextSize = 11
+coinSpeedLbl.TextXAlignment = Enum.TextXAlignment.Left
+coinSpeedLbl.Parent = coinSpeedRow
+
+local coinSpeedTextBox = Instance.new("TextBox")
+coinSpeedTextBox.Size = UDim2.new(0, 80, 0, 22)
+coinSpeedTextBox.Position = UDim2.new(1, -88, 0.5, -11)
+coinSpeedTextBox.BackgroundColor3 = Color3.fromRGB(45, 35, 65)
+coinSpeedTextBox.Text = tostring(coinWalkSpeed)
+coinSpeedTextBox.TextColor3 = Color3.fromRGB(255, 180, 255)
+coinSpeedTextBox.Font = Enum.Font.GothamBold
+coinSpeedTextBox.TextSize = 12
+coinSpeedTextBox.Parent = coinSpeedRow
+Instance.new("UICorner", coinSpeedTextBox).CornerRadius = UDim.new(0, 4)
+
+coinSpeedTextBox.FocusLost:Connect(function()
+	local num = tonumber(coinSpeedTextBox.Text)
+	if num then
+		coinWalkSpeed = num
+	else
+		coinSpeedTextBox.Text = tostring(coinWalkSpeed)
+	end
 end)
